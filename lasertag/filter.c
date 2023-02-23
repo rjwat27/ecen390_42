@@ -109,12 +109,18 @@ double filter_firFilter(){
 // Output is returned and is also pushed onto zQueue[filterNumber].
 double filter_iirFilter(uint16_t filterNumber){
     double z = 0;
-    z += iir_b_coeff[filterNumber][0] * queue_readElementAt(&yQueue, 0);
-        printf("Filtering with b and index %d: %24.20le and %24.20le\n", 0, iir_b_coeff[filterNumber][0], queue_readElementAt(&yQueue, 0));
+    
+    z += iir_b_coeff[filterNumber][0]* queue_readElementAt(&yQueue, Y_QUEUE_SIZE-1);
+    //z += iir_a_coeff[filterNumber][0] * queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT);
+    //printf("extra val: %f\n", iir_b_coeff[filterNumber][0] * queue_readElementAt(&yQueue, 0));
+        //printf("Filtering with b and index %d: %24.20le and %24.20le\n", 0, iir_b_coeff[filterNumber][0], queue_readElementAt(&yQueue, 0));
     for(int i = 1; i < IIR_COEF_COUNT; i++)
     {
-        z += iir_b_coeff[filterNumber][i] * queue_readElementAt(&yQueue, i);
-        printf("Filtering with b and index %d: %24.20le and %24.20le\n", IIR_COEF_COUNT - i, iir_b_coeff[filterNumber][i], queue_readElementAt(&yQueue, i));
+        z += iir_b_coeff[filterNumber][i]* queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1 -i);
+        //printf("da b coef: %f da q element: %f\n", iir_b_coeff[filterNumber][i], queue_readElementAt(&yQueue, i));
+        //z += iir_a_coeff[filterNumber][i] * queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
+        //printf("Filtering with b and index %d: %24.20le and %24.20le\n", IIR_COEF_COUNT - i, iir_b_coeff[filterNumber][i], queue_readElementAt(&yQueue, i));
+      
         z -= iir_a_coeff[filterNumber][i] * queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
     }
     queue_overwritePush(&zQueues[filterNumber], z);
@@ -125,25 +131,29 @@ double filter_iirFilter(uint16_t filterNumber){
 // Use this to compute the power for values contained in an outputQueue.
 double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
                            bool debugPrint){
+    static double oldest_value[FILTER_FREQUENCY_COUNT];
     // Sum up all the power from scratch if its the first time
     if(forceComputeFromScratch){
-        double new_power = 0;
+        double new_power = 0.0;
         for(int i = 0; i < OUTPUT_QUEUE_SIZE; i++){
             double energy = queue_readElementAt(&outputQueues[filterNumber], i);
             new_power += energy * energy;
         }
         current_power[filterNumber] = new_power;
-        printf("Initial Power: %f\n", new_power);
+        //printf("Initial Power: %f\n", new_power);
+        oldest_value[filterNumber] = queue_readElementAt(&outputQueues[filterNumber], 0);
         return new_power;
     }
 
     // Otherwise, just subtract the oldest power and add the newest one
-    static double oldest_value[FILTER_FREQUENCY_COUNT];
-    double newest_value = queue_readElementAt(&outputQueues[filterNumber], OUTPUT_QUEUE_SIZE -1);
+    double newest_value = queue_readElementAt(&outputQueues[filterNumber], OUTPUT_QUEUE_SIZE-1);
     double new_power = current_power[filterNumber] - oldest_value[filterNumber] * oldest_value[filterNumber] + newest_value*newest_value;
-    current_power[filterNumber] = new_power;
     oldest_value[filterNumber] = queue_readElementAt(&outputQueues[filterNumber], 0);
-    return new_power;
+    double power_test = filter_computePower(filterNumber, true, false);
+    //printf("test power: scratch: %lf update: %lf\nCurrent power: %lf\nOld power: %lf\nNew power: %lf\n", power_test, new_power, current_power[filterNumber], oldest_value[filterNumber] * oldest_value[filterNumber], newest_value*newest_value);
+    current_power[filterNumber] = new_power;
+    
+    return new_power; 
 }
 
 // Returns the last-computed output power value for the IIR filter
