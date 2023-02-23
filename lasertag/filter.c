@@ -130,18 +130,21 @@ static queue_t yQueue;
 static queue_t zQueues[FILTER_FREQUENCY_COUNT];
 static queue_t outputQueues[FILTER_FREQUENCY_COUNT];
 
+//initialize queue and fill with zeros
 static void init_xQueue() {
   queue_init(&xQueue, FIR_COEF_COUNT, X_QUEUE_NAME);
   for (int i = 0; i < xQueue.size; i++) {
     queue_overwritePush(&xQueue, 0);
   }
 }
+//initialize queue and fill with zeros
 static void init_yQueue() {
   queue_init(&yQueue, Y_QUEUE_SIZE, Y_QUEUE_NAME);
   for (int i = 0; i < yQueue.size; i++) {
     queue_overwritePush(&yQueue, 0);
   }
 }
+//initialize queue and fill with zeros
 static void init_zQueue() {
   for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&zQueues[n], Z_QUEUE_SIZE, Z_QUEUE_NAME);
@@ -151,6 +154,7 @@ static void init_zQueue() {
   }
 }
 
+//initialize queues and fill with zeros
 static void init_outputQueues() {
   for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&outputQueues[n], OUTPUT_QUEUE_SIZE, OUTPUT_QUEUE_NAME);
@@ -162,7 +166,6 @@ static void init_outputQueues() {
 
 // Must call this prior to using any filter functions.
 void filter_init() {
-  printf("\n");
   init_xQueue();
   init_yQueue();
   init_zQueue();
@@ -190,20 +193,11 @@ double filter_iirFilter(uint16_t filterNumber) {
 
   z += iir_b_coeff[filterNumber][0] *
        queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1);
-  // z += iir_a_coeff[filterNumber][0] *
-  // queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT); printf("extra
-  // val: %f\n", iir_b_coeff[filterNumber][0] * queue_readElementAt(&yQueue, 0));
-  // printf("Filtering with b and index %d: %24.20le and %24.20le\n", 0,
-  // iir_b_coeff[filterNumber][0], queue_readElementAt(&yQueue, 0));
+
   for (int i = 1; i < IIR_COEF_COUNT; i++) {
     z += iir_b_coeff[filterNumber][i] *
          queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1 - i);
-    // printf("da b coef: %f da q element: %f\n", iir_b_coeff[filterNumber][i],
-    // queue_readElementAt(&yQueue, i)); z += iir_a_coeff[filterNumber][i] *
-    // queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
-    // printf("Filtering with b and index %d: %24.20le and %24.20le\n",
-    // IIR_COEF_COUNT - i, iir_b_coeff[filterNumber][i],
-    // queue_readElementAt(&yQueue, i));
+
 
     z -= iir_a_coeff[filterNumber][i] *
          queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
@@ -240,17 +234,14 @@ double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
   oldest_value[filterNumber] =
       queue_readElementAt(&outputQueues[filterNumber], 0);
   double power_test = filter_computePower(filterNumber, true, false);
-  // printf("test power: scratch: %lf update: %lf\nCurrent power: %lf\nOld
-  // power: %lf\nNew power: %lf\n", power_test, new_power,
-  // current_power[filterNumber], oldest_value[filterNumber] *
-  // oldest_value[filterNumber], newest_value*newest_value);
+
   current_power[filterNumber] = new_power;
 
   return new_power;
 }
 
 // Returns the last-computed output power value for the IIR filter
-// [filterNumber].
+
 double filter_getCurrentPowerValue(uint16_t filterNumber) {
   return current_power[filterNumber];
 }
