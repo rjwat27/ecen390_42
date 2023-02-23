@@ -166,7 +166,6 @@ static void init_outputQueues() {
 
 // Must call this prior to using any filter functions.
 void filter_init() {
-  printf("\n");
   init_xQueue();
   init_yQueue();
   init_zQueue();

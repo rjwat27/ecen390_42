@@ -11,8 +11,8 @@ For questions, contact Brad Hutchings or Jeff Goeders, https://ece.byu.edu/
 #define RUNNING_MODE_TESTS
 
 // Uncomment to run Milestone 3, Task 2
-    #define RUNNING_MODE_M3_T1 
-// #define RUNNING_MODE_M3_T2
+//#define RUNNING_MODE_M3_T1
+#define RUNNING_MODE_M3_T2
 
 // Uncomment to run continuous/shooter mode, Milestone 3, Task 3
 // #define RUNNING_MODE_M3_T3
@@ -36,12 +36,12 @@ For questions, contact Brad Hutchings or Jeff Goeders, https://ece.byu.edu/
 #include "leds.h"
 #include "lockoutTimer.h"
 #include "mio.h"
+#include "queueTest.h"
 #include "runningModes.h"
 #include "sound.h"
 #include "switches.h"
 #include "transmitter.h"
 #include "trigger.h"
-#include "queueTest.h"
 
 int main() {
   mio_init(false);  // true enables debug prints
