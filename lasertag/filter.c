@@ -130,18 +130,21 @@ static queue_t yQueue;
 static queue_t zQueues[FILTER_FREQUENCY_COUNT];
 static queue_t outputQueues[FILTER_FREQUENCY_COUNT];
 
+// Initialize queue and set all initial values to 0
 static void init_xQueue() {
   queue_init(&xQueue, FIR_COEF_COUNT, X_QUEUE_NAME);
   for (int i = 0; i < xQueue.size; i++) {
     queue_overwritePush(&xQueue, 0);
   }
 }
+// Initialize queue and set all initial values to 0
 static void init_yQueue() {
   queue_init(&yQueue, Y_QUEUE_SIZE, Y_QUEUE_NAME);
   for (int i = 0; i < yQueue.size; i++) {
     queue_overwritePush(&yQueue, 0);
   }
 }
+// Initialize queue and set all initial values to 0
 static void init_zQueue() {
   for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&zQueues[n], Z_QUEUE_SIZE, Z_QUEUE_NAME);
@@ -151,6 +154,7 @@ static void init_zQueue() {
   }
 }
 
+// Initialize queues and set all initial values to 0
 static void init_outputQueues() {
   for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&outputQueues[n], OUTPUT_QUEUE_SIZE, OUTPUT_QUEUE_NAME);
@@ -187,24 +191,13 @@ double filter_firFilter() {
 // Output is returned and is also pushed onto zQueue[filterNumber].
 double filter_iirFilter(uint16_t filterNumber) {
   double z = 0;
-
+  // Add the index 0 b coefficient
   z += iir_b_coeff[filterNumber][0] *
        queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1);
-  // z += iir_a_coeff[filterNumber][0] *
-  // queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT); printf("extra
-  // val: %f\n", iir_b_coeff[filterNumber][0] * queue_readElementAt(&yQueue, 0));
-  // printf("Filtering with b and index %d: %24.20le and %24.20le\n", 0,
-  // iir_b_coeff[filterNumber][0], queue_readElementAt(&yQueue, 0));
+  // Add and subtract the feedforward and feedback elements
   for (int i = 1; i < IIR_COEF_COUNT; i++) {
     z += iir_b_coeff[filterNumber][i] *
          queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1 - i);
-    // printf("da b coef: %f da q element: %f\n", iir_b_coeff[filterNumber][i],
-    // queue_readElementAt(&yQueue, i)); z += iir_a_coeff[filterNumber][i] *
-    // queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
-    // printf("Filtering with b and index %d: %24.20le and %24.20le\n",
-    // IIR_COEF_COUNT - i, iir_b_coeff[filterNumber][i],
-    // queue_readElementAt(&yQueue, i));
-
     z -= iir_a_coeff[filterNumber][i] *
          queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
   }
@@ -225,7 +218,6 @@ double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
       new_power += energy * energy;
     }
     current_power[filterNumber] = new_power;
-    // printf("Initial Power: %f\n", new_power);
     oldest_value[filterNumber] =
         queue_readElementAt(&outputQueues[filterNumber], 0);
     return new_power;
@@ -240,10 +232,6 @@ double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
   oldest_value[filterNumber] =
       queue_readElementAt(&outputQueues[filterNumber], 0);
   double power_test = filter_computePower(filterNumber, true, false);
-  // printf("test power: scratch: %lf update: %lf\nCurrent power: %lf\nOld
-  // power: %lf\nNew power: %lf\n", power_test, new_power,
-  // current_power[filterNumber], oldest_value[filterNumber] *
-  // oldest_value[filterNumber], newest_value*newest_value);
   current_power[filterNumber] = new_power;
 
   return new_power;
@@ -262,23 +250,13 @@ void filter_setCurrentPowerValue(uint16_t filterNumber, double value) {
 }
 
 // Get a copy of the current power values.
-// This function copies the already computed values into a previously-declared
-// array so that they can be accessed from outside the filter software by the
-// detector. Remember that when you pass an array into a C function, changes to
-// the array within that function are reflected in the returned array.
 void filter_getCurrentPowerValues(double powerValues[]) {
   for (int i = 0; i < FILTER_FREQUENCY_COUNT; i++) {
     powerValues[i] = current_power[i];
   }
 }
 
-// Using the previously-computed power values that are currently stored in
-// currentPowerValue[] array, copy these values into the normalizedArray[]
-// argument and then normalize them by dividing all of the values in
-// normalizedArray by the maximum power value contained in currentPowerValue[].
-// The pointer argument indexOfMaxValue is used to return the index of the
-// maximum value. If the maximum power is zero, make sure to not divide by zero
-// and that *indexOfMaxValue is initialized to a sane value (like zero).
+// Returns the normalized powers
 void filter_getNormalizedPowerValues(double normalizedArray[],
                                      uint16_t *indexOfMaxValue) {
   *indexOfMaxValue = 0;
