@@ -130,21 +130,21 @@ static queue_t yQueue;
 static queue_t zQueues[FILTER_FREQUENCY_COUNT];
 static queue_t outputQueues[FILTER_FREQUENCY_COUNT];
 
-// Initialize queue and set all initial values to 0
+// initialize queue and fill with zeros
 static void init_xQueue() {
   queue_init(&xQueue, FIR_COEF_COUNT, X_QUEUE_NAME);
   for (int i = 0; i < xQueue.size; i++) {
     queue_overwritePush(&xQueue, 0);
   }
 }
-// Initialize queue and set all initial values to 0
+// initialize queue and fill with zeros
 static void init_yQueue() {
   queue_init(&yQueue, Y_QUEUE_SIZE, Y_QUEUE_NAME);
   for (int i = 0; i < yQueue.size; i++) {
     queue_overwritePush(&yQueue, 0);
   }
 }
-// Initialize queue and set all initial values to 0
+// initialize queue and fill with zeros
 static void init_zQueue() {
   for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&zQueues[n], Z_QUEUE_SIZE, Z_QUEUE_NAME);
@@ -154,7 +154,7 @@ static void init_zQueue() {
   }
 }
 
-// Initialize queues and set all initial values to 0
+// initialize queues and fill with zeros
 static void init_outputQueues() {
   for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&outputQueues[n], OUTPUT_QUEUE_SIZE, OUTPUT_QUEUE_NAME);
@@ -193,10 +193,11 @@ double filter_iirFilter(uint16_t filterNumber) {
   // Add the index 0 b coefficient
   z += iir_b_coeff[filterNumber][0] *
        queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1);
-  // Add and subtract the feedforward and feedback elements
+
   for (int i = 1; i < IIR_COEF_COUNT; i++) {
     z += iir_b_coeff[filterNumber][i] *
          queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1 - i);
+
     z -= iir_a_coeff[filterNumber][i] *
          queue_readElementAt(&zQueues[filterNumber], IIR_COEF_COUNT - i);
   }
@@ -237,7 +238,7 @@ double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
 }
 
 // Returns the last-computed output power value for the IIR filter
-// [filterNumber].
+
 double filter_getCurrentPowerValue(uint16_t filterNumber) {
   return current_power[filterNumber];
 }
