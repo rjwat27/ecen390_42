@@ -44,7 +44,7 @@ For questions, contact Brad Hutchings or Jeff Goeders, https://ece.byu.edu/
 #include "trigger.h"
 
 int main() {
-  mio_init(false);  // true enables debug prints
+  mio_init(true);  // true enables debug prints
   leds_init(false); // true enables debug prints
   buttons_init();
   switches_init();
@@ -73,11 +73,11 @@ int main() {
   interrupts_startArmPrivateTimer();  // start the main timer.
   interrupts_enableArmInts(); // now the ARM processor can see interrupts.
 
-  transmitter_runTestNoncontinuous();
-  transmitter_runTestContinuous();
+  //transmitter_runTestNoncontinuous();
+  //transmitter_runTestContinuous();
   //trigger_runTest();
   //hitLedTimer_runTest();
-  // lockoutTimer_runTest();
+  lockoutTimer_runTest();
 #endif
 
 #ifdef RUNNING_MODE_M3_T3

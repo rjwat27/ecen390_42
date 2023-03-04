@@ -2,6 +2,7 @@
 #include "buttons.h"
 #include "filter.h"
 #include "mio.h"
+#include <stdio.h> 
 // The transmitter state machine generates a square wave output at the chosen
 // frequency as set by transmitter_setFrequencyNumber(). The step counts for the
 // frequencies are provided in filter.h
@@ -25,6 +26,7 @@ volatile static bool continuous_flag;
 void transmitter_init() {
   current_state = IDLE;
   run_transmission = false;
+  mio_setPinAsOutput(TRANSMITTER_OUTPUT_PIN);
   pulse_timer = TRANSMITTER_PULSE_WIDTH;
   duty_cycle_timer = 0;
   continuous_flag = false;
@@ -39,6 +41,7 @@ void transmitter_tick() {
     // Initialize the timer and start running high
     if (run_transmission) {
       run_transmission = false;
+       
       pulse_timer = TRANSMITTER_PULSE_WIDTH;
       current_frequency_num = next_frequency_num;
       duty_cycle_timer = filter_frequencyTickTable
@@ -51,15 +54,19 @@ void transmitter_tick() {
     }
     break;
   case RUNNING_HIGH:
+  
     // If the pulse is finished, reset if continuous or go idle
     if (pulse_timer == 0) {
+      //printf("pulse running high: %d\n", pulse_timer);
       if (continuous_flag) {
         current_frequency_num = next_frequency_num;
         duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
         pulse_timer = TRANSMITTER_PULSE_WIDTH;
+        
         current_state = RUNNING_HIGH;
       } else {
         current_state = IDLE;
+        mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_OFF);
       }
     } else if (duty_cycle_timer ==
                0) { // If the duty cycle on is over, go to low signal state
@@ -73,10 +80,12 @@ void transmitter_tick() {
   case RUNNING_LOW:
     // If the pulse is finished, reset if continuous or go idle
     if (pulse_timer == 0) {
+      printf("pulse running low: %d\n", pulse_timer);
       if (continuous_flag) {
         current_frequency_num = next_frequency_num;
         duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
         pulse_timer = TRANSMITTER_PULSE_WIDTH;
+        
         mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_ON);
         current_state = RUNNING_HIGH;
       } else {
@@ -117,7 +126,10 @@ void transmitter_run() { run_transmission = true; }
 
 // Returns true if the transmitter is still running.
 bool transmitter_running() {
-  return current_state == RUNNING_HIGH || current_state == RUNNING_LOW;
+  bool test = current_state == RUNNING_HIGH || current_state == RUNNING_LOW || run_transmission == true;
+  
+  printf("\n"); //delay needed??
+  return test; 
 }
 
 // Sets the frequency number. If this function is called while the
@@ -172,8 +184,9 @@ void transmitter_runTest() {
         switchValue);  // set the frequency number based upon switch value.
     transmitter_run(); // Start the transmitter.
     while (transmitter_running()) {
+      utils_msDelay(TEST_DELAY); 
     }
-    printf("completed one test period.\n");
+    //printf("completed one test period.\n");
   }
   do {
     utils_msDelay(BOUNCE_DELAY);
@@ -194,6 +207,8 @@ void transmitter_runTestNoncontinuous() {
   buttons_init();     // Using buttons
   switches_init();    // and switches.
   transmitter_init(); // init the transmitter.
+  mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_ON);
+  //utils_msDelay(50);
   while (!(buttons_read() &
            BUTTONS_BTN3_MASK)) { // Run continuously until BTN3 is pressed.
     uint16_t switchValue =
@@ -204,9 +219,10 @@ void transmitter_runTestNoncontinuous() {
     transmitter_run(); // Start the transmitter.
     while (transmitter_running()) {
     }
-    printf("completed one test period.\n");
+    //printf("completed one test period.\n");
+    utils_msDelay(TEST_DELAY);
   }
-  utils_msDelay(TEST_DELAY);
+  
   do {
     utils_msDelay(BOUNCE_DELAY);
   } while (buttons_read());
@@ -230,6 +246,7 @@ void transmitter_runTestContinuous() {
   transmitter_init(); // init the transmitter.
   transmitter_setContinuousMode(true);
   transmitter_run();
+  
   while (true) {
     transmitter_tick(); // tick.
     utils_msDelay(
