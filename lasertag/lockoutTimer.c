@@ -60,7 +60,7 @@ void lockoutTimer_tick() {
 void lockoutTimer_start() { timer_run = true; }
 
 // Returns true if the timer is running.
-bool lockoutTimer_running() { return (current_state == RUNNING); }
+bool lockoutTimer_running() { return (current_state == RUNNING || timer_run); }
 
 // Test function assumes interrupts have been completely enabled and
 // lockoutTimer_tick() function is invoked by isr_function().
@@ -75,9 +75,9 @@ bool lockoutTimer_runTest() {
   intervalTimer_init(TEST_TIMER);
   lockoutTimer_start();
   intervalTimer_start(TEST_TIMER);
-  while (lockoutTimer_running()) {
-    // lockoutTimer_tick();
-  }
+
+  while (lockoutTimer_running()) {}
+
   intervalTimer_stop(TEST_TIMER);
   double time = intervalTimer_getTotalDurationInSeconds(TEST_TIMER);
   printf("total: %f\n", time);

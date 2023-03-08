@@ -1,6 +1,7 @@
 #include "trigger.h"
 #include "buttons.h"
 #include "transmitter.h"
+#include "utils.h" 
 #include <stdint.h>
 
 #define TRIGGER_GUN_TRIGGER_MIO_PIN 10 // JF1 (pg. 25 of ZYBO reference manual).
@@ -36,6 +37,15 @@ void trigger_init() {
   currentState = IDLE;
 }
 
+// Trigger can be activated by either btn0 or the external gun that is attached
+// to TRIGGER_GUN_TRIGGER_MIO_PIN Gun input is ignored if the gun-input is high
+// when the init() function is invoked.
+bool triggerPressed() {
+  return ((!ignoreGunInput &&
+           (mio_readPin(TRIGGER_GUN_TRIGGER_MIO_PIN) == GUN_TRIGGER_PRESSED)) ||
+          (buttons_read() && BUTTONS_BTN0_MASK));
+}
+
 // Standard tick function.
 void trigger_tick() {
 
@@ -54,6 +64,7 @@ void trigger_tick() {
     if (triggerPressed()) {
       if (debounceTicks == 0) {
         currentState = PRESSED;
+        printf("D\n"); 
         transmitter_run();
         shotsLeft--;
       } else {
@@ -77,6 +88,7 @@ void trigger_tick() {
     if (!triggerPressed()) {
       if (debounceTicks == 0) {
         currentState = IDLE;
+        printf("U\n"); 
       } else {
         currentState = DEBOUNCE_RELEASED;
       }
@@ -140,12 +152,4 @@ void trigger_runTest() {
     utils_msDelay(BOUNCE_DELAY);
   } while (buttons_read());
   printf("exiting trigger_runTest()\n");
-}
-// Trigger can be activated by either btn0 or the external gun that is attached
-// to TRIGGER_GUN_TRIGGER_MIO_PIN Gun input is ignored if the gun-input is high
-// when the init() function is invoked.
-bool triggerPressed() {
-  return ((!ignoreGunInput &
-           (mio_readPin(TRIGGER_GUN_TRIGGER_MIO_PIN) == GUN_TRIGGER_PRESSED)) ||
-          (buttons_read() & BUTTONS_BTN0_MASK));
 }

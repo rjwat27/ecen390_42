@@ -79,7 +79,7 @@ void transmitter_tick() {
   case RUNNING_LOW:
     // If the pulse is finished, reset if continuous or go idle
     if (pulse_timer == 0) {
-      printf("pulse running low: %d\n", pulse_timer);
+     // printf("pulse running low: %d\n", pulse_timer);
       if (continuous_flag) {
         current_frequency_num = next_frequency_num;
         duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
@@ -245,7 +245,7 @@ void transmitter_runTestContinuous() {
   transmitter_setContinuousMode(true);
   transmitter_run();
   uint8_t runs = 10;
-  while (runs--) {
+  while (runs) {
     transmitter_tick(); // tick.
     utils_msDelay(
         TRANSMITTER_TEST_TICK_PERIOD_IN_MS); // short delay between ticks.
