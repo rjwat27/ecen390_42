@@ -46,7 +46,6 @@ void hitLedTimer_stop() {
     tick_count = 0; 
     timerStartFlag = false; 
     timerIsRunning = false; 
-    //current_state = OFF; 
     hitLedTimer_turnLedOff();
 }
 
@@ -61,11 +60,8 @@ void hitLedTimer_init() {
 
 // Standard tick function.
 void hitLedTimer_tick() {
-    //increment tick count
     //state transitions
-    //tick_count++; 
-     
-    
+
     switch(current_state) {
 
     case OFF:
@@ -77,8 +73,6 @@ void hitLedTimer_tick() {
         break; 
 
     case HIT_ON:
-        // //hitLedTimer_turnLedOn(); FIXME 
-        // printf(""); 
         if ((tick_count >= HIT_LED_TIMER_EXPIRE_VALUE-1) ) {
   
             hitLedTimer_turnLedOff();
@@ -128,9 +122,7 @@ void hitLedTimer_turnLedOff() {
 
 // Disables the hitLedTimer.
 void hitLedTimer_disable() {
-    //tick_count = 0; 
     timerStartFlag = false; 
-    //current_state = OFF; 
     hitLedTimer_turnLedOff();
 }
 
@@ -143,15 +135,12 @@ void hitLedTimer_enable() {
 // The test continuously blinks the hit-led on and off.
 // Depends on the interrupt handler to call tick function.
 void hitLedTimer_runTest() {
-    hitLedTimer_init();
-    //hitLedTimer_turnLedOn();
+
 
     while (!(buttons_read() & BUTTONS_BTN3_MASK)) {
         hitLedTimer_start(); 
-        while(hitLedTimer_running()) {
-            hitLedTimer_tick(); 
-        }
-        utils_msDelay(300); 
+        while(hitLedTimer_running()) {}
+        utils_msDelay(500); 
         
         
     }

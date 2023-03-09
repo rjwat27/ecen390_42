@@ -45,7 +45,7 @@ void transmitter_tick() {
       // Set the pulse timer and duty cycle
       pulse_timer = TRANSMITTER_PULSE_WIDTH;
       current_frequency_num = next_frequency_num;
-      duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
+      duty_cycle_timer = filter_frequencyTickTable[current_frequency_num]/2;
       mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_ON);
       current_state = RUNNING_HIGH;
     } else {
@@ -56,10 +56,9 @@ void transmitter_tick() {
 
     // If the pulse is finished, reset if continuous or go idle
     if (pulse_timer == 0) {
-      // printf("pulse running high: %d\n", pulse_timer);
       if (continuous_flag) {
         current_frequency_num = next_frequency_num;
-        duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
+        duty_cycle_timer = filter_frequencyTickTable[current_frequency_num]/2;
         pulse_timer = TRANSMITTER_PULSE_WIDTH;
 
         current_state = RUNNING_HIGH;
@@ -71,7 +70,7 @@ void transmitter_tick() {
                0) { // If the duty cycle on is over, go to low signal state
       mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_OFF);
       current_state = RUNNING_LOW;
-      duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
+      duty_cycle_timer = filter_frequencyTickTable[current_frequency_num]/2;
     } else {
       current_state = RUNNING_HIGH;
     }
@@ -79,10 +78,9 @@ void transmitter_tick() {
   case RUNNING_LOW:
     // If the pulse is finished, reset if continuous or go idle
     if (pulse_timer == 0) {
-     // printf("pulse running low: %d\n", pulse_timer);
       if (continuous_flag) {
         current_frequency_num = next_frequency_num;
-        duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
+        duty_cycle_timer = filter_frequencyTickTable[current_frequency_num]/2;
         pulse_timer = TRANSMITTER_PULSE_WIDTH;
 
         mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_ON);
@@ -94,7 +92,7 @@ void transmitter_tick() {
                0) { // If the duty cycle on is over, go to high signal state
       mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_ON);
       current_state = RUNNING_HIGH;
-      duty_cycle_timer = filter_frequencyTickTable[current_frequency_num];
+      duty_cycle_timer = filter_frequencyTickTable[current_frequency_num]/2;
     } else {
       current_state = RUNNING_LOW;
     }
@@ -172,7 +170,6 @@ void transmitter_runTest() {
   mio_init(false);
   buttons_init();     // Using buttons
   switches_init();    // and switches.
-  transmitter_init(); // init the transmitter.
   while (!(buttons_read() &
            BUTTONS_BTN3_MASK)) { // Run continuously until BTN3 is pressed.
     uint16_t switchValue =
@@ -184,7 +181,6 @@ void transmitter_runTest() {
     while (transmitter_running()) {
       utils_msDelay(TEST_DELAY);
     }
-    // printf("completed one test period.\n");
   }
   do {
     utils_msDelay(BOUNCE_DELAY);
@@ -204,9 +200,7 @@ void transmitter_runTestNoncontinuous() {
   mio_init(false);
   buttons_init();     // Using buttons
   switches_init();    // and switches.
-  transmitter_init(); // init the transmitter.
   mio_writePin(TRANSMITTER_OUTPUT_PIN, LED_ON);
-  // utils_msDelay(50);
   while (!(buttons_read() &
            BUTTONS_BTN3_MASK)) { // Run continuously until BTN3 is pressed.
     uint16_t switchValue =
@@ -217,7 +211,6 @@ void transmitter_runTestNoncontinuous() {
     transmitter_run(); // Start the transmitter.
     while (transmitter_running()) {
     }
-    // printf("completed one test period.\n");
     utils_msDelay(TEST_DELAY);
   }
 
@@ -241,16 +234,13 @@ void transmitter_runTestContinuous() {
   mio_init(false);
   buttons_init();     // Using buttons
   switches_init();    // and switches.
-  transmitter_init(); // init the transmitter.
   transmitter_setContinuousMode(true);
   transmitter_run();
   uint8_t runs = 10;
   while (runs) {
-    transmitter_tick(); // tick.
     utils_msDelay(
         TRANSMITTER_TEST_TICK_PERIOD_IN_MS); // short delay between ticks.
-    if ((buttons_read() &
-         BUTTONS_BTN3_MASK)) { // Run continuously until BTN3 is pressed.
+    if (true) { // Run continuously until BTN3 is pressed.
       uint16_t switchValue =
           switches_read() %
           FILTER_FREQUENCY_COUNT; // Compute a safe number from the switches.

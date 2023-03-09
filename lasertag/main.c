@@ -75,9 +75,9 @@ int main() {
 
   // transmitter_runTestNoncontinuous();
   // transmitter_runTestContinuous();
-  trigger_runTest();
+  ///trigger_runTest();
   //hitLedTimer_runTest();
-  //lockoutTimer_runTest();
+  lockoutTimer_runTest();
 #endif
 
 #ifdef RUNNING_MODE_M3_T3

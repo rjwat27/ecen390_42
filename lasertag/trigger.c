@@ -142,8 +142,7 @@ void trigger_runTest() {
   mio_init(false);
   buttons_init();     // Using buttons
   switches_init();    // and switches.
-  transmitter_init(); // init the transmitter.
-  trigger_init();
+ 
 
   while (!(buttons_read() &
            BUTTONS_BTN3_MASK)) { // Run continuously until BTN3 is pressed.

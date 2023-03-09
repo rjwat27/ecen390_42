@@ -23,7 +23,7 @@ void isr_init() {
 void isr_function() {
   // Tick all of our state machines
   hitLedTimer_tick();
-  //lockoutTimer_tick();
+  lockoutTimer_tick();
   transmitter_tick();
   trigger_tick();
 }
