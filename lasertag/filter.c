@@ -231,7 +231,6 @@ double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
                      newest_value * newest_value;
   oldest_value[filterNumber] =
       queue_readElementAt(&outputQueues[filterNumber], 0);
-  double power_test = filter_computePower(filterNumber, true, false);
   current_power[filterNumber] = new_power;
 
   return new_power;

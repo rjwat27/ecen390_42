@@ -1,5 +1,5 @@
 #include "buffer.h"
-#define MAX_CAPACITY 500
+#define MAX_CAPACITY 200
 // Type of elements in the buffer.
 typedef uint32_t buffer_data_t;
 volatile static uint32_t elementCount;

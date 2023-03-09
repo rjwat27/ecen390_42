@@ -8,14 +8,14 @@ For questions, contact Brad Hutchings or Jeff Goeders, https://ece.byu.edu/
 */
 
 // Uncomment to run tests, various Milestones
-#define RUNNING_MODE_TESTS
+//#define RUNNING_MODE_TESTS
 
 // Uncomment to run Milestone 3, Task 2
 //#define RUNNING_MODE_M3_T1
-#define RUNNING_MODE_M3_T2
+//#define RUNNING_MODE_M3_T2
 
 // Uncomment to run continuous/shooter mode, Milestone 3, Task 3
-// #define RUNNING_MODE_M3_T3
+#define RUNNING_MODE_M3_T3
 
 // Uncomment to run two-player mode, Milestone 5
 // #define RUNNING_MODE_M5
@@ -76,11 +76,12 @@ int main() {
   // transmitter_runTestNoncontinuous();
   // transmitter_runTestContinuous();
   ///trigger_runTest();
-  //hitLedTimer_runTest();
-  lockoutTimer_runTest();
+  // hitLedTimer_runTest();
+  // lockoutTimer_runTest();
 #endif
 
 #ifdef RUNNING_MODE_M3_T3
+  detector_runTest();
   // The program comes up in continuous mode by default.
   // Hold BTN2 while the program starts to come up in shooter mode.
   // Interrupts are enabled in runningModes.

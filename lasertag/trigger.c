@@ -64,7 +64,6 @@ void trigger_tick() {
     if (triggerPressed()) {
       if (debounceTicks == 0) {
         currentState = PRESSED;
-        printf("D\n"); 
         transmitter_run();
         shotsLeft--;
       } else {
@@ -88,7 +87,6 @@ void trigger_tick() {
     if (!triggerPressed()) {
       if (debounceTicks == 0) {
         currentState = IDLE;
-        printf("U\n"); 
       } else {
         currentState = DEBOUNCE_RELEASED;
       }
