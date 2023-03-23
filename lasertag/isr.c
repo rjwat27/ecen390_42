@@ -14,6 +14,7 @@ void isr_init() {
   lockoutTimer_init();
   transmitter_init();
   trigger_init();
+  buffer_init();
 }
 
 // This function is invoked by the timer interrupt at 100 kHz.
