@@ -403,7 +403,7 @@ static int AudioRegSet(XIicPs *IIcPtr, u8 regAddr, u16 regData) {
   // while (XIicPs_BusIsBusy(IIcPtr)) {
   //   /* NOP */
   // }
-  // return XST_SUCCESS;
+  return XST_SUCCESS;
 }
 
 /***  AudioInitialize(u16 timerID,  u16 iicID, u32 i2sAddr)

@@ -36,6 +36,8 @@ void transmitter_init() {
 
 // Standard tick function.
 void transmitter_tick() {
+  //printf("current state! %d\n", current_state); 
+  printf(""); 
   // State Machines Transitions
   switch (current_state) {
   case IDLE:

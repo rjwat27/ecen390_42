@@ -15,6 +15,7 @@ void isr_init() {
   transmitter_init();
   trigger_init();
   buffer_init();
+  sound_init();
 }
 
 // This function is invoked by the timer interrupt at 100 kHz.
@@ -25,4 +26,5 @@ void isr_function() {
   transmitter_tick();
   trigger_tick();
   buffer_pushover(interrupts_getAdcData());
+  sound_tick();
 }

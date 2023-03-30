@@ -133,22 +133,22 @@ static queue_t outputQueues[FILTER_FREQUENCY_COUNT];
 // initialize queue and fill with zeros
 static void init_xQueue() {
   queue_init(&xQueue, FIR_COEF_COUNT, X_QUEUE_NAME);
-  for (int i = 0; i < xQueue.size; i++) {
+  for (uint16_t i = 0; i < xQueue.size; i++) {
     queue_overwritePush(&xQueue, 0);
   }
 }
 // initialize queue and fill with zeros
 static void init_yQueue() {
   queue_init(&yQueue, Y_QUEUE_SIZE, Y_QUEUE_NAME);
-  for (int i = 0; i < yQueue.size; i++) {
+  for (uint16_t i = 0; i < yQueue.size; i++) {
     queue_overwritePush(&yQueue, 0);
   }
 }
 // initialize queue and fill with zeros
 static void init_zQueue() {
-  for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
+  for (uint16_t n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&zQueues[n], Z_QUEUE_SIZE, Z_QUEUE_NAME);
-    for (int i = 0; i < zQueues[n].size; i++) {
+    for (uint16_t i = 0; i < zQueues[n].size; i++) {
       queue_overwritePush(&zQueues[n], 0);
     }
   }
@@ -156,9 +156,9 @@ static void init_zQueue() {
 
 // initialize queues and fill with zeros
 static void init_outputQueues() {
-  for (int n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
+  for (uint16_t n = 0; n < FILTER_FREQUENCY_COUNT; n++) {
     queue_init(&outputQueues[n], OUTPUT_QUEUE_SIZE, OUTPUT_QUEUE_NAME);
-    for (int i = 0; i < outputQueues[n].size; i++) {
+    for (uint16_t i = 0; i < outputQueues[n].size; i++) {
       queue_overwritePush(&outputQueues[n], 0);
     }
   }
@@ -179,7 +179,7 @@ void filter_addNewInput(double x) { queue_overwritePush(&xQueue, x); }
 // Output is returned and is also pushed on to yQueue.
 double filter_firFilter() {
   double y = 0;
-  for (int i = 0; i < FIR_COEF_COUNT; i++) {
+  for (uint16_t i = 0; i < FIR_COEF_COUNT; i++) {
     y += fir_coeffs[i] * queue_readElementAt(&xQueue, FIR_COEF_COUNT - 1 - i);
   }
   queue_overwritePush(&yQueue, y);
@@ -194,7 +194,7 @@ double filter_iirFilter(uint16_t filterNumber) {
   z += iir_b_coeff[filterNumber][0] *
        queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1);
 
-  for (int i = 1; i < IIR_COEF_COUNT; i++) {
+  for (uint16_t i = 1; i < IIR_COEF_COUNT; i++) {
     z += iir_b_coeff[filterNumber][i] *
          queue_readElementAt(&yQueue, Y_QUEUE_SIZE - 1 - i);
 
@@ -213,7 +213,7 @@ double filter_computePower(uint16_t filterNumber, bool forceComputeFromScratch,
   // Sum up all the power from scratch if its the first time
   if (forceComputeFromScratch) {
     double new_power = 0.0;
-    for (int i = 0; i < OUTPUT_QUEUE_SIZE; i++) {
+    for (uint16_t i = 0; i < OUTPUT_QUEUE_SIZE; i++) {
       double energy = queue_readElementAt(&outputQueues[filterNumber], i);
       new_power += energy * energy;
     }
@@ -250,7 +250,7 @@ void filter_setCurrentPowerValue(uint16_t filterNumber, double value) {
 
 // Get a copy of the current power values.
 void filter_getCurrentPowerValues(double powerValues[]) {
-  for (int i = 0; i < FILTER_FREQUENCY_COUNT; i++) {
+  for (uint16_t i = 0; i < FILTER_FREQUENCY_COUNT; i++) {
     powerValues[i] = current_power[i];
   }
 }
@@ -260,7 +260,7 @@ void filter_getNormalizedPowerValues(double normalizedArray[],
                                      uint16_t *indexOfMaxValue) {
   *indexOfMaxValue = 0;
   // Find the index of the max power
-  for (int i = 1; i < FILTER_FREQUENCY_COUNT; i++) {
+  for (uint16_t i = 1; i < FILTER_FREQUENCY_COUNT; i++) {
     if (current_power[*indexOfMaxValue] < current_power[i]) {
       *indexOfMaxValue = i;
     }
@@ -270,7 +270,7 @@ void filter_getNormalizedPowerValues(double normalizedArray[],
     return;
   }
   // Normalize the power array
-  for (int i = 0; i < FILTER_FREQUENCY_COUNT; i++) {
+  for (uint16_t i = 0; i < FILTER_FREQUENCY_COUNT; i++) {
     normalizedArray[i] = current_power[i] / current_power[*indexOfMaxValue];
   }
 }

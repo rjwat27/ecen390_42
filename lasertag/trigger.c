@@ -29,7 +29,7 @@ trigger_shotsRemaining_t shotsLeft;
 // (see discussion in lab web pages).
 void trigger_init() {
   mio_init(false);
-  mio_setPinAsOutput(TRIGGER_GUN_TRIGGER_MIO_PIN);
+  //mio_setPinAsOutput(TRIGGER_GUN_TRIGGER_MIO_PIN);
   ignoreGunInput = false;
   debounceTicks = 0;
   enabled = true;
@@ -41,9 +41,12 @@ void trigger_init() {
 // to TRIGGER_GUN_TRIGGER_MIO_PIN Gun input is ignored if the gun-input is high
 // when the init() function is invoked.
 bool triggerPressed() {
-  return ((!ignoreGunInput &&
+  if ((!ignoreGunInput &&
            (mio_readPin(TRIGGER_GUN_TRIGGER_MIO_PIN) == GUN_TRIGGER_PRESSED)) ||
-          (buttons_read() && BUTTONS_BTN0_MASK));
+          (buttons_read() && BUTTONS_BTN0_MASK)){
+            return true;
+          }
+          return false;
 }
 
 // Standard tick function.

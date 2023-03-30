@@ -17,6 +17,11 @@ The code in runningModes.c can be an example for implementing the game here.
 #include "interrupts.h"
 #include "runningModes.h"
 
+#define MAX_LIVES 3
+#define HITS_PER_LIFE 5
+#define SHOTS 10
+#define VOLUME 8
+
 // This game supports two teams, Team-A and Team-B.
 // Each team operates on its own configurable frequency.
 // Each player has a fixed set of lives and once they
@@ -26,13 +31,38 @@ The code in runningModes.c can be an example for implementing the game here.
 // that takes a short time to reload a new clip.
 // The clips are automatically loaded.
 // Runs until BTN3 is pressed.
+
+
+uint32_t lives; 
+uint32_t hearts;  
+uint32_t rounds; 
+
+
+#define INTERRUPTS_CURRENTLY_ENABLED false
+
 void game_twoTeamTag(void) {
   uint16_t hitCount = 0;
   runningModes_initAll();
+  sound_setVolume(sound_volume_t VOLUME); //FIXME 
 
   // Configuration...
-
+  lives = MAX_LIVES;
+  hearts = HITS_PER_LIFE; 
+  rounds = SHOTS; 
   // Implement game loop...
+  while (lives > 0) {
+    detector(INTERRUPTS_CURRENTLY_ENABLED);
+    if (detector_hitDetected()) {  // Hit detected
+      hearts--;          
+      sound_setSound(sound_hit_e);                
+      detector_clearHit();                 
+      if (hearts <= 0) {
+        lives--; 
+        hearts = HITS_PER_LIFE; 
+        sound_setSound(sound_loseLife_e);
+      }
+    }
+  }
 
   // End game loop...
   interrupts_disableArmInts(); // Done with game loop, disable the interrupts.

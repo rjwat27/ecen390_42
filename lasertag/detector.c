@@ -14,10 +14,10 @@ typedef uint16_t detector_hitCount_t;
 #define NUM_FREQ 10
 #define DECIMATION_FACTOR 10
 #define MEDIAN_INDEX 4
-#define NORMAL_FUDGING 400
+#define NORMAL_FUDGING 100
 #define NORMALIZING_FACTOR 2047.5
 #define POWER_TEST_1 .1, .2, .3, .25, .225, .2125, .206125, 130, 1, 3
-#define POWER_TEST_2 .11, .25, .33, .25, .225, .215, .4, 6, 1, 34
+#define POWER_TEST_2 .11, .25, .33, .25, .225, .215, .4, 2, 1, 34
 
 static bool freqIgnore[NUM_FREQ];
 static uint32_t detector_hitArray[NUM_FREQ];
@@ -29,7 +29,6 @@ static uint32_t detector_invocationCount;
 static uint32_t fudgeFactor;
 static uint32_t lastDetectedHitID;
 
-void hit_detect(double *filterPowers);
 // Initialize the detector module.
 // By default, all frequencies are considered for hits.
 // Assumes the filter module is initialized previously.
@@ -40,6 +39,7 @@ void detector_init(void) {
   }
   filter_input_count = 0;
   detector_hitDetectedFlag = false;
+  god_mode = false;
   detector_invocationCount = 0;
   fudgeFactor = NORMAL_FUDGING;
   lastDetectedHitID = 0;
