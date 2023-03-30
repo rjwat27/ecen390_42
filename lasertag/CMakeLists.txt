@@ -10,6 +10,7 @@ lockoutTimer.c
 buffer.c
 detector.c
 game.c
+autoReloadTimer.c
 )
 
 include_directories(. sound)

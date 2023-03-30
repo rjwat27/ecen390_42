@@ -6,6 +6,7 @@
 #include "lockoutTimer.h"
 #include "transmitter.h"
 #include "trigger.h"
+#include "sound.h"
 
 #define ISR_PERIOD 1e-5
 
