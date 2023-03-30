@@ -25,7 +25,7 @@ volatile static bool ignoreGunInput;
 volatile static bool enabled;
 volatile transmitterState_t currentState;
 volatile static uint16_t debounceTicks;
-volatile static uint16_t reloadHoldCount;
+volatile static uint32_t reloadHoldCount;
 volatile static trigger_shotsRemaining_t shotsLeft;
 
 // Init trigger data-structures.
@@ -41,6 +41,7 @@ void trigger_init() {
   enabled = true;
   shotsLeft = STARTING_SHOTS;
   currentState = IDLE;
+  reloadHoldCount = 0;
 }
 
 // Trigger can be activated by either btn0 or the external gun that is attached
@@ -81,6 +82,7 @@ void trigger_tick() {
           shotsLeft--;
         } else {
           // Play out of ammo sound
+          reloadHoldCount = 0;
           sound_playSound(sound_gunClick_e);
           currentState = PRESSED;
         }
@@ -128,9 +130,10 @@ void trigger_tick() {
     break;
   case PRESSED:
     // Reload after 3 second hold, add sound here
-    if (reloadHoldCount == AUTO_RELOAD_EXPIRE_VALUE) {
+    if (reloadHoldCount >= AUTO_RELOAD_EXPIRE_VALUE) {
       sound_playSound(sound_gunReload_e);
       shotsLeft = AUTO_RELOAD_SHOT_VALUE;
+      //printf("Force Reloading\n");
     }
     reloadHoldCount++;
     break;

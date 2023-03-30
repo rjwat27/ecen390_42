@@ -3,6 +3,7 @@
 #include "hitLedTimer.h"
 #include "interrupts.h"
 #include "intervalTimer.h"
+#include "invincibilityTimer.h"
 #include "lockoutTimer.h"
 #include "transmitter.h"
 #include "trigger.h"
@@ -19,6 +20,7 @@ void isr_init() {
   buffer_init();
   autoReloadTimer_init();
   sound_init();
+  invincibilityTimer_init();
 }
 
 // This function is invoked by the timer interrupt at 100 kHz.
@@ -30,5 +32,6 @@ void isr_function() {
   trigger_tick();
   autoReloadTimer_tick();
   buffer_pushover(interrupts_getAdcData());
+  invincibilityTimer_tick();
   sound_tick();
 }

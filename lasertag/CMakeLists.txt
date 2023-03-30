@@ -11,6 +11,7 @@ buffer.c
 detector.c
 game.c
 autoReloadTimer.c
+invincibilityTimer.c
 )
 
 include_directories(. sound)
