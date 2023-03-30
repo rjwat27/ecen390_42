@@ -1,3 +1,4 @@
+#include "autoReloadTimer.h"
 #include "buffer.h"
 #include "hitLedTimer.h"
 #include "interrupts.h"
@@ -15,6 +16,7 @@ void isr_init() {
   transmitter_init();
   trigger_init();
   buffer_init();
+  autoReloadTimer_init();
   sound_init();
 }
 
@@ -25,6 +27,7 @@ void isr_function() {
   lockoutTimer_tick();
   transmitter_tick();
   trigger_tick();
+  autoReloadTimer_tick();
   buffer_pushover(interrupts_getAdcData());
   sound_tick();
 }

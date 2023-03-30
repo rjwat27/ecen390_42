@@ -1,7 +1,9 @@
 #include "trigger.h"
+#include "autoReloadTimer.h"
 #include "buttons.h"
+#include "sound.h"
 #include "transmitter.h"
-#include "utils.h" 
+#include "utils.h"
 #include <stdint.h>
 
 #define TRIGGER_GUN_TRIGGER_MIO_PIN 10 // JF1 (pg. 25 of ZYBO reference manual).
@@ -21,7 +23,8 @@ volatile static bool ignoreGunInput;
 volatile static bool enabled;
 volatile transmitterState_t currentState;
 volatile static uint16_t debounceTicks;
-trigger_shotsRemaining_t shotsLeft;
+volatile static uint16_t reloadHoldCount;
+volatile trigger_shotsRemaining_t shotsLeft;
 
 // Init trigger data-structures.
 // Initializes the mio subsystem.
@@ -29,7 +32,7 @@ trigger_shotsRemaining_t shotsLeft;
 // (see discussion in lab web pages).
 void trigger_init() {
   mio_init(false);
-  //mio_setPinAsOutput(TRIGGER_GUN_TRIGGER_MIO_PIN);
+  // mio_setPinAsOutput(TRIGGER_GUN_TRIGGER_MIO_PIN);
   ignoreGunInput = false;
   debounceTicks = 0;
   enabled = true;
@@ -42,11 +45,11 @@ void trigger_init() {
 // when the init() function is invoked.
 bool triggerPressed() {
   if ((!ignoreGunInput &&
-           (mio_readPin(TRIGGER_GUN_TRIGGER_MIO_PIN) == GUN_TRIGGER_PRESSED)) ||
-          (buttons_read() && BUTTONS_BTN0_MASK)){
-            return true;
-          }
-          return false;
+       (mio_readPin(TRIGGER_GUN_TRIGGER_MIO_PIN) == GUN_TRIGGER_PRESSED)) ||
+      (buttons_read() && BUTTONS_BTN0_MASK)) {
+    return true;
+  }
+  return false;
 }
 
 // Standard tick function.
@@ -55,7 +58,7 @@ void trigger_tick() {
   // State machine transitions
   switch (currentState) {
   case IDLE:
-    if (enabled && triggerPressed() && shotsLeft != 0) {
+    if (enabled && triggerPressed()) {
       currentState = DEBOUNCE_PRESSED;
       debounceTicks = TRIGGER_DEBOUNCE_TICKS;
     } else {
@@ -66,9 +69,18 @@ void trigger_tick() {
     // Go back to idle if the trigger goes low, otherwise keep debouncince
     if (triggerPressed()) {
       if (debounceTicks == 0) {
-        currentState = PRESSED;
-        transmitter_run();
-        shotsLeft--;
+        if (shotsLeft != 0) {
+          // Go to pressed, run transmitter and sound
+          sound_playSound(sound_gunFire_e);
+          reloadHoldCount = 0;
+          currentState = PRESSED;
+          transmitter_run();
+          shotsLeft--;
+        } else {
+          // Play out of ammo sound
+          sound_playSound(sound_gunClick_e);
+          currentState = PRESSED;
+        }
       } else {
         currentState = DEBOUNCE_PRESSED;
       }
@@ -104,11 +116,20 @@ void trigger_tick() {
   // State machine actions
   switch (currentState) {
   case IDLE:
+    if (!autoReloadTimer_running() && shotsLeft == 0) {
+      autoReloadTimer_running();
+    }
     break;
   case DEBOUNCE_PRESSED:
     debounceTicks--;
     break;
   case PRESSED:
+    // Reload after 3 second hold, add sound here
+    if (reloadHoldCount == AUTO_RELOAD_EXPIRE_VALUE) {
+      sound_playSound(sound_gunReload_e);
+      shotsLeft = AUTO_RELOAD_SHOT_VALUE;
+    }
+    reloadHoldCount++;
     break;
   case DEBOUNCE_RELEASED:
     debounceTicks--;
@@ -141,9 +162,8 @@ void trigger_setRemainingShotCount(trigger_shotsRemaining_t count) {
 void trigger_runTest() {
   printf("starting trigger_runTest()\n");
   mio_init(false);
-  buttons_init();     // Using buttons
-  switches_init();    // and switches.
- 
+  buttons_init();  // Using buttons
+  switches_init(); // and switches.
 
   while (!(buttons_read() &
            BUTTONS_BTN3_MASK)) { // Run continuously until BTN3 is pressed.
