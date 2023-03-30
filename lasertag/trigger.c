@@ -6,7 +6,6 @@
 #include "utils.h"
 #include <stdint.h>
 
-
 #define TRIGGER_GUN_TRIGGER_MIO_PIN 10 // JF1 (pg. 25 of ZYBO reference manual).
 #define TRIGGER_DEBOUNCE_TICKS 5000 // Based on a system tick-rate of 100 kHz.
 #define GUN_TRIGGER_PRESSED 1
@@ -14,7 +13,6 @@
 #define STARTING_SHOTS 10
 
 #define VOLUME SOUND_VOLUME_2
-
 
 typedef enum {
   IDLE,
@@ -28,14 +26,14 @@ volatile static bool enabled;
 volatile transmitterState_t currentState;
 volatile static uint16_t debounceTicks;
 volatile static uint16_t reloadHoldCount;
-volatile trigger_shotsRemaining_t shotsLeft;
+volatile static trigger_shotsRemaining_t shotsLeft;
 
 // Init trigger data-structures.
 // Initializes the mio subsystem.
 // Determines whether the trigger switch of the gun is connected
 // (see discussion in lab web pages).
 void trigger_init() {
-  sound_setVolume(VOLUME); 
+  sound_setVolume(VOLUME);
   mio_init(false);
   // mio_setPinAsOutput(TRIGGER_GUN_TRIGGER_MIO_PIN);
   ignoreGunInput = false;

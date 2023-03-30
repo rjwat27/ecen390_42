@@ -1,3 +1,4 @@
+#include "sound.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -36,6 +37,7 @@ void autoReloadTimer_tick() {
   case RUNNING: // Switch off if timer runs out
     if (tick_count >= AUTO_RELOAD_EXPIRE_VALUE) {
       current_state = OFF;
+      sound_playSound(sound_gunReload_e);
       trigger_setRemainingShotCount(AUTO_RELOAD_SHOT_VALUE);
     }
     break;
