@@ -12,15 +12,19 @@ The code in runningModes.c can be an example for implementing the game here.
 */
 
 #include <stdio.h>
+#include <stdint.h>
 
+
+#include "sound.h" 
 #include "hitLedTimer.h"
 #include "interrupts.h"
 #include "runningModes.h"
+#include "detector.h"
 
 #define MAX_LIVES 3
 #define HITS_PER_LIFE 5
 #define SHOTS 10
-#define VOLUME 8
+#define VOLUME SOUND_VOLUME_2
 
 // This game supports two teams, Team-A and Team-B.
 // Each team operates on its own configurable frequency.
@@ -38,12 +42,15 @@ uint32_t hearts;
 uint32_t rounds; 
 
 
-#define INTERRUPTS_CURRENTLY_ENABLED false
+#define INTERRUPTS_CURRENTLY_ENABLED true
 
 void game_twoTeamTag(void) {
-  uint16_t hitCount = 0;
   runningModes_initAll();
-  sound_setVolume(sound_volume_t VOLUME); //FIXME 
+  sound_setVolume(VOLUME); 
+
+
+  //welcome to laser tag 3000
+  sound_playSound(sound_gameStart_e);
 
   // Configuration...
   lives = MAX_LIVES;
@@ -54,18 +61,23 @@ void game_twoTeamTag(void) {
     detector(INTERRUPTS_CURRENTLY_ENABLED);
     if (detector_hitDetected()) {  // Hit detected
       hearts--;          
-      sound_setSound(sound_hit_e);                
+      sound_playSound(sound_hit_e);                
       detector_clearHit();                 
       if (hearts <= 0) {
         lives--; 
         hearts = HITS_PER_LIFE; 
-        sound_setSound(sound_loseLife_e);
+        sound_playSound(sound_loseLife_e);
       }
     }
   }
-
+  //all lives lost... too bad
+  sound_playSound(sound_gameOver_e);
   // End game loop...
   interrupts_disableArmInts(); // Done with game loop, disable the interrupts.
   hitLedTimer_turnLedOff();    // Save power :-)
   runningModes_printRunTimeStatistics(); // Print the run-time statistics.
+  while (true) {
+    sound_playSound(sound_returnToBase_e);
+    sound_playSound(sound_oneSecondSilence_e);
+  }
 }
