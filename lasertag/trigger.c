@@ -133,7 +133,6 @@ void trigger_tick() {
     if (reloadHoldCount >= AUTO_RELOAD_EXPIRE_VALUE) {
       sound_playSound(sound_gunReload_e);
       shotsLeft = AUTO_RELOAD_SHOT_VALUE;
-      //printf("Force Reloading\n");
     }
     reloadHoldCount++;
     break;

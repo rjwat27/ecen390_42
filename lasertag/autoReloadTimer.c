@@ -36,7 +36,6 @@ void autoReloadTimer_tick() {
     break;
   case RUNNING: // Switch off if timer runs out
     if (tick_count >= AUTO_RELOAD_EXPIRE_VALUE) {
-      //printf("Auto reload\n");
       current_state = OFF;
       sound_playSound(sound_gunReload_e);
       trigger_setRemainingShotCount(AUTO_RELOAD_SHOT_VALUE);

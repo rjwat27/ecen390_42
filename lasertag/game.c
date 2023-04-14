@@ -18,6 +18,7 @@ The code in runningModes.c can be an example for implementing the game here.
 #include "sound.h" 
 #include "hitLedTimer.h"
 #include "interrupts.h"
+#include "bluetooth.h"
 #include "runningModes.h"
 #include "detector.h"
 #include "lockoutTimer.h"
@@ -63,14 +64,14 @@ The code in runningModes.c can be an example for implementing the game here.
 uint32_t lives; 
 uint32_t hearts;  
 uint32_t rounds; 
-
+static uint8_t kill_counts[FILTER_FREQUENCY_COUNT] = {0};
+static uint8_t incomingData[1];
 
 #define INTERRUPTS_CURRENTLY_ENABLED true
 
 void game_twoTeamTag(void) {
   runningModes_initAll();
   sound_setVolume(VOLUME); 
-
   uint16_t hitCount = 0;
 
   bool ignoredFrequencies[FILTER_FREQUENCY_COUNT];
@@ -99,8 +100,20 @@ void game_twoTeamTag(void) {
     interrupts_enableArmInts(); // ARM will now see interrupts after this.
     lockoutTimer_start(); // Ignore erroneous hits at startup (when all power
                           // values are essentially 0).
+  bool start = false;
+  while(!start){
+    interrupts_disableArmInts();
+    uint16_t bytesRead = bluetooth_receiveQueueRead(incomingData, 1);
+    if(incomingData[0] == 's' && bytesRead == 1){
+        start = true;
+
+    }
+        interrupts_enableArmInts(); // ARM will now see interrupts after this.
 
 
+  }
+  printf("I am here\n");
+  // TODO: Timer Start here
   //welcome to laser tag 3000
   sound_playSound(sound_gameStart_e);
   while (!sound_isSoundComplete()) {} 
@@ -111,8 +124,8 @@ void game_twoTeamTag(void) {
   hearts = HITS_PER_LIFE; 
   rounds = SHOTS; 
   // Implement game loop...
-  while (lives > 0) {
-  
+  while (lives > 0) { // add timer stuff here
+    Statistics();
     intervalTimer_start(MAIN_CUMULATIVE_TIMER); // Measure run-time when you are
                                                 // doing something.
     detector(INTERRUPTS_CURRENTLY_ENABLED);
@@ -131,27 +144,49 @@ void game_twoTeamTag(void) {
         hearts = HITS_PER_LIFE; 
         sound_playSound(sound_loseLife_e);
         invincibilityTimer_start(RESPAWN_TIME);
-
+        kill_counts[detector_getFrequencyNumberOfLastHit()]++;
       }
       intervalTimer_stop(MAIN_CUMULATIVE_TIMER); // All done with actual processing.
     }
+
   }
   
+  interrupts_disableArmInts();
+  
+
+ 
+  char score[10] = "     |  ";
+  score[3] = '0' + kill_counts[0];
+  score[9] = '0' + kill_counts[8];
+  bluetooth_transmitQueueWrite(score, 10);
+
+  interrupts_enableArmInts();
+
   //all lives lost... too bad
   sound_playSound(sound_gameOver_e);
   while (!sound_isSoundComplete()) {} 
   runningModes_printRunTimeStatistics(); // Print the run-time statistics.
   // End game loop...
-  // interrupts_disableArmInts(); // Done with game loop, disable the interrupts.
-  // hitLedTimer_turnLedOff();    // Save power :-)
   while (true) {
     trigger_disable();
-
+    Statistics();
     sound_playSound(sound_returnToBase_e);
     while (!sound_isSoundComplete()) {} 
 
     sound_playSound(sound_oneSecondSilence_e);
     while (!sound_isSoundComplete()) {} 
   }
+}
+
+void Statistics(){
+      //uint8_t incomingData[1];
+
+    interrupts_disableArmInts();
+    uint16_t bytesRead = bluetooth_receiveQueueRead(incomingData, 1);
+    if(incomingData[0] == 'd' && bytesRead == 1){
+      bluetooth_transmitQueueWrite(incomingData[0], 1);
+    }
+        interrupts_enableArmInts(); // ARM will now see interrupts after this.
+  
 }
    
