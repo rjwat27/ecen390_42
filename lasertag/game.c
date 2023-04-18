@@ -184,7 +184,7 @@ void Statistics(){
     interrupts_disableArmInts();
     uint16_t bytesRead = bluetooth_receiveQueueRead(incomingData, 1);
     if(incomingData[0] == 'd' && bytesRead == 1){
-      bluetooth_transmitQueueWrite(incomingData[0], 1);
+      bluetooth_transmitQueueWrite(incomingData, 1);
     }
         interrupts_enableArmInts(); // ARM will now see interrupts after this.
   
