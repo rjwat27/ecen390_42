@@ -30,8 +30,8 @@ The code in runningModes.c can be an example for implementing the game here.
 #include "histogram.h"
 
 
-#define MAX_LIVES 3
-#define HITS_PER_LIFE 5
+#define MAX_LIVES 50
+#define HITS_PER_LIFE 2
 #define SHOTS 10
 #define VOLUME SOUND_VOLUME_3
 #define RESPAWN_TIME 5
@@ -64,10 +64,16 @@ The code in runningModes.c can be an example for implementing the game here.
 uint32_t lives; 
 uint32_t hearts;  
 uint32_t rounds; 
-static uint8_t kill_counts[FILTER_FREQUENCY_COUNT] = {0};
-static uint8_t incomingData[1];
+static uint8_t killCount[FILTER_FREQUENCY_COUNT] = {0};
+
+#define dataLength 100 
+uint8_t incomingData[1];
+uint8_t outgoingData[dataLength];
+uint8_t outgoingNum[2];
+uint8_t playerNum;
 
 #define INTERRUPTS_CURRENTLY_ENABLED true
+void updateBluetooth();
 
 void game_twoTeamTag(void) {
   runningModes_initAll();
@@ -77,10 +83,14 @@ void game_twoTeamTag(void) {
   bool ignoredFrequencies[FILTER_FREQUENCY_COUNT];
     for (uint16_t i = 0; i < FILTER_FREQUENCY_COUNT; i++)
       ignoredFrequencies[i] = false;
-    uint16_t switch0 = switches_read() & SW_0; 
-    uint16_t our_frequency = (switch0) ? TEAM_B : TEAM_A;
-    printf("Ignoring own frequency.\n");
-    ignoredFrequencies[our_frequency] = true;
+    uint16_t our_frequency = switches_read() %9; 
+    playerNum = our_frequency;
+    ignoredFrequencies[playerNum] = true;
+    uint8_t teamIgnore = (playerNum < 5)? 0:5;
+    for(uint8_t i = 0; i < 5; i++, teamIgnore++){
+      ignoredFrequencies[teamIgnore] = true;
+    }
+    ignoredFrequencies[9] = true;
     detector_setIgnoredFrequencies(ignoredFrequencies);
     transmitter_setFrequencyNumber(
         our_frequency);    // Read the switches and switch
@@ -112,7 +122,6 @@ void game_twoTeamTag(void) {
 
 
   }
-  printf("I am here\n");
   // TODO: Timer Start here
   //welcome to laser tag 3000
   sound_playSound(sound_gameStart_e);
@@ -125,42 +134,33 @@ void game_twoTeamTag(void) {
   rounds = SHOTS; 
   // Implement game loop...
   while (lives > 0) { // add timer stuff here
-    Statistics();
+    updateBluetooth();
     intervalTimer_start(MAIN_CUMULATIVE_TIMER); // Measure run-time when you are
                                                 // doing something.
     detector(INTERRUPTS_CURRENTLY_ENABLED);
     if (detector_hitDetected()) {  // Hit detected
-      hearts--;    
-      hitCount++;                                 
-      sound_playSound(sound_hit_e);                
-      detector_clearHit();  
-      detector_hitCount_t
-          hitCounts[DETECTOR_HIT_ARRAY_SIZE]; // Store the hit-counts here.
-      detector_getHitCounts(hitCounts);       // Get the current hit counts.
-      histogram_plotUserHits(hitCounts);      // Plot the hit counts on the TFT.               
-      if (hearts <= 0) {
-        lives--; 
+      detector_clearHit();
+      if(!invincibilityTimer_running()){          
+        hearts--;    
+        hitCount++;                                    
+        sound_playSound(sound_hit_e);     
+        detector_hitCount_t
+            hitCounts[DETECTOR_HIT_ARRAY_SIZE]; // Store the hit-counts here.
+        detector_getHitCounts(hitCounts);       // Get the current hit counts.
+        histogram_plotUserHits(hitCounts);      // Plot the hit counts on the TFT.               
+        if (hearts <= 0) {
+          lives--; 
 
-        hearts = HITS_PER_LIFE; 
-        sound_playSound(sound_loseLife_e);
-        invincibilityTimer_start(RESPAWN_TIME);
-        kill_counts[detector_getFrequencyNumberOfLastHit()]++;
+          hearts = HITS_PER_LIFE; 
+          sound_playSound(sound_loseLife_e);
+          invincibilityTimer_start(RESPAWN_TIME);
+          killCount[detector_getFrequencyNumberOfLastHit()]++;
+        }
+        intervalTimer_stop(MAIN_CUMULATIVE_TIMER); // All done with actual processing.
       }
-      intervalTimer_stop(MAIN_CUMULATIVE_TIMER); // All done with actual processing.
     }
 
   }
-  
-  interrupts_disableArmInts();
-  
-
- 
-  char score[10] = "     |  ";
-  score[3] = '0' + kill_counts[0];
-  score[9] = '0' + kill_counts[8];
-  bluetooth_transmitQueueWrite(score, 10);
-
-  interrupts_enableArmInts();
 
   //all lives lost... too bad
   sound_playSound(sound_gameOver_e);
@@ -168,8 +168,9 @@ void game_twoTeamTag(void) {
   runningModes_printRunTimeStatistics(); // Print the run-time statistics.
   // End game loop...
   while (true) {
+
     trigger_disable();
-    Statistics();
+    updateBluetooth();
     sound_playSound(sound_returnToBase_e);
     while (!sound_isSoundComplete()) {} 
 
@@ -178,15 +179,49 @@ void game_twoTeamTag(void) {
   }
 }
 
-void Statistics(){
-      //uint8_t incomingData[1];
-
-    interrupts_disableArmInts();
-    uint16_t bytesRead = bluetooth_receiveQueueRead(incomingData, 1);
-    if(incomingData[0] == 'd' && bytesRead == 1){
-      bluetooth_transmitQueueWrite(incomingData, 1);
-    }
-        interrupts_enableArmInts(); // ARM will now see interrupts after this.
-  
+void intToString(uint8_t number) {
+  outgoingNum[1] = number % 10 + '0';
+  outgoingNum[0] = (number / 10) + '0';
 }
-   
+
+uint8_t getTotalDeaths() {
+  uint8_t sum = 0;
+  if(playerNum < 5) {
+    for(uint8_t i = 5; i < 10; i++) {
+      sum += killCount[i];
+    }
+  } else {
+    for(uint8_t i = 0; i < 5; i++) {
+      sum += killCount[i];
+    }
+  }
+  return sum;
+}
+
+void updateBluetooth() {
+  interrupts_disableArmInts();
+    uint16_t bytesRead = bluetooth_receiveQueueRead(incomingData, 1);
+    if(bytesRead == 1) {
+      uint8_t dataPlayerNum = incomingData[0] - '0';
+      if (incomingData[0] == 's') {
+        intToString(getTotalDeaths());
+        if(playerNum < 5) {
+          sprintf(outgoingData, "A 0 0 B %c %c \n", outgoingNum[0],outgoingNum[1]);
+        } else {
+          sprintf(outgoingData, "A %c %c B 0 0 \n", outgoingNum[0],outgoingNum[1]);
+        }
+        bluetooth_transmitQueueWrite(outgoingData, dataLength);
+      } else if(dataPlayerNum <= 9 && dataPlayerNum >= 0) {
+        if(dataPlayerNum == playerNum) {
+          intToString(getTotalDeaths());
+          sprintf(outgoingData, "P %c D : %c %c \n", incomingData[0], outgoingNum[0],outgoingNum[1]);
+          bluetooth_transmitQueueWrite(outgoingData, dataLength);
+        } else if((dataPlayerNum <= 4 && playerNum >= 5) || (dataPlayerNum >= 5 && playerNum <= 4)) {
+          intToString(killCount[dataPlayerNum]);
+          sprintf(outgoingData, "P %c K : %c %c \n", incomingData[0], outgoingNum[0],outgoingNum[1]);
+          bluetooth_transmitQueueWrite(outgoingData, dataLength);
+        }
+      }
+    }
+  interrupts_enableArmInts();
+}

@@ -6,6 +6,7 @@
 #include "buffer.h"
 #include "filter.h"
 #include "hitLedTimer.h"
+#include "invincibilityTimer.h"
 #include "interrupts.h"
 #include "lockoutTimer.h"
 #include "stdio.h"
@@ -14,7 +15,7 @@ typedef uint16_t detector_hitCount_t;
 #define NUM_FREQ 10
 #define DECIMATION_FACTOR 10
 #define MEDIAN_INDEX 4
-#define NORMAL_FUDGING 100
+#define NORMAL_FUDGING 450
 #define NORMALIZING_FACTOR 2047.5
 #define POWER_TEST_1 .1, .2, .3, .25, .225, .2125, .206125, 130, 1, 3
 #define POWER_TEST_2 .11, .25, .33, .25, .225, .215, .4, 2, 1, 34
@@ -129,7 +130,7 @@ void hit_detect(double *filterPowers) {
   }
 
   // Detect the hit
-  if (!god_mode && filterPowers[sortedPowers[maxPowerIndex]] > threshold) {
+  if (filterPowers[sortedPowers[maxPowerIndex]] > threshold) {
     (detector_hitArray[sortedPowers[maxPowerIndex]])++;
     lastDetectedHitID = sortedPowers[maxPowerIndex];
     detector_hitDetectedFlag = true;

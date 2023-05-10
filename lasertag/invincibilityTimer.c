@@ -5,6 +5,7 @@
 
 #include "autoReloadTimer.h"
 #include "trigger.h"
+#include "detector.h" 
 
 #define TICK_RATE 100000
 // The lockoutTimer is active for 1/2 second once it is started.
@@ -42,6 +43,9 @@ void invincibilityTimer_tick() {
       //printf("Auto reload\n");
       current_state = OFF;
       sound_playSound(sound_gameStart_e);
+      //while (!sound_isSoundComplete()) {} 
+      detector_clearHit(); 
+
       trigger_enable();
     }
     break;
